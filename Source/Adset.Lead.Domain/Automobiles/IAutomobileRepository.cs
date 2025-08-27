@@ -2,9 +2,6 @@
 
 public interface IAutomobileRepository
 {
-    Task AddAsync(Automobile automobile);
-    Task UpdateAsync(Automobile automobile);
-    Task DeleteAsync(Guid id);
     Task<Automobile?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -82,4 +79,8 @@ public interface IAutomobileRepository
     /// </summary>
     Task<IEnumerable<PortalPackage>> GetAvailablePackagesForPortalAsync(PortalPackage portal);
     #endregion
+    
+    Task AddAsync(Automobile automobile);
+    Task UpdateAsync(Automobile automobile);
+    Task DeleteAsync(Guid id);
 }

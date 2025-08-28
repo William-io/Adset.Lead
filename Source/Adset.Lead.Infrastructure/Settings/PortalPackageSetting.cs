@@ -24,12 +24,6 @@ internal sealed class PortalPackageSetting : IEntityTypeConfiguration<PortalPack
             .IsRequired()
             .HasConversion<string>();
 
-        // Relacionamento com Automobile
-        builder.HasOne<Automobile>()
-            .WithMany()
-            .HasForeignKey(pp => pp.AutomobileId)
-            .OnDelete(DeleteBehavior.Cascade);
-
         // Índices para melhorar performance
         builder.HasIndex(pp => pp.AutomobileId)
             .HasDatabaseName("IX_PortalPackages_AutomobileId");

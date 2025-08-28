@@ -1,8 +1,7 @@
 ﻿using Adset.Lead.Domain.Automobiles;
+using Adset.Lead.Infrastructure.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using System.Text.Json;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace Adset.Lead.Infrastructure.Settings;
 
@@ -47,7 +46,13 @@ internal sealed class AutomobileSetting : IEntityTypeConfiguration<Automobile>
                 status => Enum.Parse<OptionalFeatures>(status));
         
         builder.Property(a => a.Photos)
-            .HasColumnType("json");
+            .HasJsonConversion<Automobile, Photo>();
+
+        // Configuração do relacionamento um-para-um com PortalPackage
+        builder.HasOne(a => a.PortalPackage)
+            .WithOne()
+            .HasForeignKey<PortalPackage>(pp => pp.AutomobileId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         // Índices para melhorar performance nas consultas
         builder.HasIndex(a => a.Brand)

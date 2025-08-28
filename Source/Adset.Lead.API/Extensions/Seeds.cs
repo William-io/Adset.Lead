@@ -1,5 +1,7 @@
 ﻿using System.Data;
+using System.Text.Json;
 using Adset.Lead.Application.Abstractions.Data;
+using Adset.Lead.Domain.Automobiles;
 using Bogus;
 using Dapper;
 
@@ -14,24 +16,146 @@ internal static class Seeds
         ISqlConnectionFactory sqlConnectionFactory = scope.ServiceProvider.GetRequiredService<ISqlConnectionFactory>();
         using IDbConnection connection = sqlConnectionFactory.CreateConnection();
 
-        var faker = new Faker();
-
-        List<object> clinics = new();
-        for (int i = 0; i < 3; i++)
+        // Verifica se já existem automóveis no banco
+        var existingCount = connection.QuerySingleOrDefault<int>("SELECT COUNT(*) FROM Automobiles");
+        if (existingCount > 0)
         {
-            clinics.Add(new
+            Console.WriteLine("Dados de seed já existem no banco. Pulando seeding.");
+            return;
+        }
+
+        var faker = new Faker("pt_BR");
+
+        List<object> automobiles = new();
+        List<object> portalPackages = new();
+
+        var brands = new[] { "Toyota", "Honda", "Volkswagen", "Chevrolet", "Ford", "Hyundai", "Nissan", "Fiat" };
+        var colors = new[] { "Branco", "Prata", "Preto", "Vermelho", "Azul", "Cinza", "Bege" };
+        
+        for (int i = 0; i < 10; i++)
+        {
+            var automobileId = Guid.NewGuid();
+            var brand = faker.PickRandom(brands);
+            var model = GenerateModelForBrand(brand, faker);
+            var year = faker.Random.Int(2010, 2024);
+            var plate = GenerateBrazilianPlate(faker);
+            var km = faker.Random.Bool(0.8f) ? faker.Random.Int(5000, 150000) : (int?)null;
+            var color = faker.PickRandom(colors);
+            var price = faker.Random.Decimal(25000, 120000);
+            
+            // Combina opcionais aleatórios
+            var optionalFeatures = GenerateRandomOptionalFeatures(faker);
+            
+            // Gera URLs de fotos fake
+            var photos = GeneratePhotos(faker, 2, 5);
+
+            automobiles.Add(new
+            {
+                Id = automobileId,
+                Brand = brand,
+                Model = model,
+                Year = year,
+                Plate = plate,
+                Km = km,
+                Color = color,
+                Price = price,
+                Features = optionalFeatures.ToString(),
+                Photos = JsonSerializer.Serialize(photos)
+            });
+
+            // Cria um PortalPackage para cada automóvel
+            var portal = faker.PickRandom<Portal>();
+            var package = faker.PickRandom<Package>();
+            
+            portalPackages.Add(new
             {
                 Id = Guid.NewGuid(),
-                Name = faker.Company.CompanyName()
+                AutomobileId = automobileId,
+                Portal = portal.ToString(),
+                Package = package.ToString()
             });
         }
 
-        const string sql = """
-                           INSERT INTO Clinics
-                           (Id, Name)
-                           VALUES(@Id, @Name);
+        // Insere automóveis
+        const string automobileSql = """
+                           INSERT INTO Automobiles
+                           (Id, Brand, Model, Year, Plate, Km, Color, Price, Features, Photos)
+                           VALUES(@Id, @Brand, @Model, @Year, @Plate, @Km, @Color, @Price, @Features, @Photos);
                            """;
 
-        connection.Execute(sql, clinics);
+        // Insere portal packages
+        const string portalPackageSql = """
+                           INSERT INTO PortalPackages
+                           (Id, AutomobileId, Portal, Package)
+                           VALUES(@Id, @AutomobileId, @Portal, @Package);
+                           """;
+
+        connection.Execute(automobileSql, automobiles);
+        connection.Execute(portalPackageSql, portalPackages);
+        
+        Console.WriteLine($"Seeding concluído: {automobiles.Count} automóveis criados.");
+    }
+
+    // Gera modelos de carros e específicos para cada marca
+    private static string GenerateModelForBrand(string brand, Faker faker) => brand switch
+    {
+        "Toyota" => faker.PickRandom("Corolla", "Camry", "Hilux", "Etios", "Yaris"),
+        "Honda" => faker.PickRandom("Civic", "Accord", "Fit", "HR-V", "CR-V"),
+        "Volkswagen" => faker.PickRandom("Golf", "Jetta", "Polo", "T-Cross", "Tiguan"),
+        "Chevrolet" => faker.PickRandom("Onix", "Cruze", "S10", "Tracker", "Spin"),
+        "Ford" => faker.PickRandom("Ka", "Focus", "Ecosport", "Ranger", "Edge"),
+        "Hyundai" => faker.PickRandom("HB20", "Elantra", "Creta", "Tucson", "Santa Fe"),
+        "Nissan" => faker.PickRandom("March", "Versa", "Sentra", "Kicks", "X-Trail"),
+        "Fiat" => faker.PickRandom("Uno", "Palio", "Strada", "Toro", "Compass"),
+        _ => faker.Vehicle.Model()
+    };
+
+    private static string GenerateBrazilianPlate(Faker faker)
+    {
+        // Formato brasileiro: ABC-1234 ou ABC-1A23 (Mercosul)
+        var letters = faker.Random.String2(3, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+        var isMercosul = faker.Random.Bool(0.3f); // 30% chance de ser Mercosul
+        
+        if (isMercosul)
+        {
+            var digit = faker.Random.Int(0, 9);
+            var letter = faker.Random.Char('A', 'Z');
+            var lastDigits = faker.Random.String2(2, "0123456789");
+            return $"{letters}-{digit}{letter}{lastDigits}";
+        }
+        else
+        {
+            var numbers = faker.Random.String2(4, "0123456789");
+            return $"{letters}-{numbers}";
+        }
+    }
+
+    private static OptionalFeatures GenerateRandomOptionalFeatures(Faker faker)
+    {
+        var availableFeatures = new[] 
+        { 
+            OptionalFeatures.AirConditioning,
+            OptionalFeatures.Alarm,
+            OptionalFeatures.Airbag,
+            OptionalFeatures.AbsBrake,
+            OptionalFeatures.Mp3Player
+        };
+        
+        // Seleciona apenas UMA feature aleatória, não combina múltiplas
+        return faker.PickRandom(availableFeatures);
+    }
+
+    private static List<Photo> GeneratePhotos(Faker faker, int minCount, int maxCount)
+    {
+        var count = faker.Random.Int(minCount, maxCount);
+        var photos = new List<Photo>();
+        
+        for (int i = 0; i < count; i++)
+        {
+            var photoUrl = $"https://picsum.photos/800/600?random={faker.Random.Int(1, 1000)}";
+            photos.Add(new Photo(photoUrl));
+        }
+        
+        return photos;
     }
 }

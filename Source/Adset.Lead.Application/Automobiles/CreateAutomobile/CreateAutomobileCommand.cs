@@ -1,5 +1,5 @@
-﻿using System.Windows.Input;
-using Adset.Lead.Application.Abstractions.CQRSCommunication;
+﻿using Adset.Lead.Application.Abstractions.CQRSCommunication;
+using Adset.Lead.Domain.Automobiles;
 
 namespace Adset.Lead.Application.Automobiles.CreateAutomobile;
 
@@ -11,5 +11,7 @@ public sealed record CreateAutomobileCommand(
     string Color,
     decimal Price,
     int? Km,
-    IReadOnlyCollection<string>? OptionalFeatures,
-    IReadOnlyCollection<string>? PhotoUrls) : ICommand<Guid>;
+    Portal Portal,
+    Package Package,
+    IReadOnlyCollection<OptionalFeatures>? OptionalFeatures = null,
+    IReadOnlyCollection<string>? PhotoUrls = null) : ICommand<Guid>;

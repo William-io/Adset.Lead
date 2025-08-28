@@ -2,8 +2,8 @@
 
 public enum Package
 {
-    Bronze,
-    Diamond,
-    Platinum,
-    Basic
+    Bronze = 1,
+    Diamond = 2,
+    Platinum = 3,
+    Basic = 4
 }

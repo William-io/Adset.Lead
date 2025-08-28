@@ -2,6 +2,6 @@
 
 public enum Portal
 {
-    ICars,
-    WebMotors
+    ICars = 1,
+    WebMotors = 2
 }

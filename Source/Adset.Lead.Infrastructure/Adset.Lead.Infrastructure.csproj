@@ -17,4 +17,8 @@
       <ProjectReference Include="..\Adset.Lead.Application\Adset.Lead.Application.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Migrations\" />
+    </ItemGroup>
+
 </Project>

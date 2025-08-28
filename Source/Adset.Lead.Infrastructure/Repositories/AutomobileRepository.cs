@@ -74,9 +74,8 @@ internal sealed class AutomobileRepository : Repository<Automobile>, IAutomobile
                 .ToList();
 
             if (optionalsList.Any())
-            {
-                query = query.Where(a => optionalsList.All(opt => a.Features.Contains(opt)));
-            }
+                query = query.Where(a => optionalsList.All(opt => a.Features.HasFlag(opt)));
+            
         }
 
         // Ordenação
@@ -158,7 +157,10 @@ internal sealed class AutomobileRepository : Repository<Automobile>, IAutomobile
 
             if (optionalsList.Any())
             {
-                query = query.Where(a => optionalsList.All(opt => a.Features.Contains(opt)));
+                foreach (var optional in optionalsList)
+                {
+                    query = query.Where(a => a.Features.HasFlag(optional));
+                }
             }
         }
 
@@ -177,7 +179,7 @@ internal sealed class AutomobileRepository : Repository<Automobile>, IAutomobile
     public async Task<IEnumerable<string>> GetAvailableOptionalsAsync()
     {
         var optionals = await _context.Set<Automobile>()
-            .SelectMany(a => a.Features)
+            .Select(a => a.Features)
             .Distinct()
             .ToListAsync();
 

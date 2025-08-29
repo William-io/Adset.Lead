@@ -426,6 +426,9 @@ test-results/
 *.dmg
 *.app
 
+# Exception for Angular project
+!Source/Adset.Lead.App/
+
 # content below from: https://github.com/github/gitignore/blob/master/Global/macOS.gitignore
 # General
 .DS_Store

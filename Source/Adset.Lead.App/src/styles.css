@@ -1,7 +1,5 @@
-/* You can add global styles to this file, and also import other style files */
 @import '~@angular/material/prebuilt-themes/indigo-pink.css';
 
-/* Custom color variables */
 :root {
   --adset-orange: #ff9800;
   --adset-dark: #333333;
@@ -28,7 +26,6 @@ body {
   box-sizing: border-box;
 }
 
-/* Clean Material theme overrides */
 .mat-form-field-appearance-outline .mat-form-field-outline-thick {
   color: #2196f3;
 }
@@ -41,7 +38,6 @@ body {
   color: #2196f3 !important;
 }
 
-/* Clean button styles */
 .mat-raised-button.mat-primary {
   background-color: var(--adset-blue) !important;
   color: white !important;
